@@ -78,8 +78,10 @@ initialized({to_client, {ChannelPid, {_SrcPid, SrcNick}, Message}},
                             end, no_channel_found, ChannelMappings),
     case ChannelName of
         no_channel_found ->
+            io:format("no channel found"),
             {next_state, initialized, State};
         String when is_list(String) ->
+            io:format("sending message"),
             to_message_forwarder(MessageForwarder, ["message", ChannelName, SrcNick, Message]),
             {next_state, initialized, State}
     end.
@@ -87,7 +89,7 @@ initialized(client_nick, {_Pid, _MsgTag}, State=#state{nick = Nick}) ->
     {reply, Nick, initialized, State}.
 
 % When the message forwarder crashes, we terminate...
-handle_info({'DOWN', _ref, process, MessageForwarder, _Reason}, StateName, #state{message_forwarder=MessageForwarder}) ->
+handle_info({'DOWN', _ref, process, MessageForwarder, _Reason}, _StateName, #state{message_forwarder=MessageForwarder}) ->
     exit(normal).
 
 % When we terminate - either we crash, or the client disconnects and the client_proxy sends its death to us, remove ourselves from the channels we've connected to (that being the only real dependency we have to look after).

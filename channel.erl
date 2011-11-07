@@ -1,5 +1,5 @@
 -module(channel).
--compile([export_all, debug_info]).
+-compile([export_all]).
 
 %%% Channel - a glorified dispatcher where multiple clients can add themselves to be notified of messages posted, or post messages themselves.
 
@@ -13,6 +13,8 @@ behaviour_info(callbacks) ->
     [{init, 1}, {handle_cast, 2}, {handle_call, 3}, {handle_info, 2}, {terminate, 2}].
 
 %%% Wrapper functions over gen_server calls. 
+start_link() ->
+    gen_server:start_link(?MODULE, [], []).
 start() ->
     gen_server:start(?MODULE, [], []).
 % These are gen_server casts with the exception of add_client, which returns success | nick_already_exists.

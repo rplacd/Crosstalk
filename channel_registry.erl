@@ -15,6 +15,8 @@ behaviour_info(callbacks) ->
     [{init, 1}, {handle_cast, 2}, {handle_call, 3}, {terminate, 2}].
 
 %%% Wrapper functions over gen_server calls.
+start_link() ->
+    gen_server:start_link(?MODULE, [], []).
 start() ->
     gen_server:start(?MODULE, [], []).
 % Get a Channel pid for Name - if it doesn't exist, create one.
@@ -33,7 +35,7 @@ handle_call({get_channel, Name}, {_ClientPid, _MsgTag}, State=#state{name_to_cha
         {reply, dict:fetch(Name, Channels), State}
     catch
         error:badarg ->
-            {_, Channel} = channel:start(),
+            {_, Channel} = channel_supervisor:start_child(whereis(channel_supervisor)),
             {reply, Channel,
              State#state{name_to_channels=dict:store(Name, Channel, Channels),
                          name_to_monitor=dict:store(Name, monitor(process, Channel) ,Monitors)}}

@@ -5,25 +5,30 @@
 %%% Where things start, really.
 
 -record(state,
-        {}).
+        {listen_socket}).
 
 behavior_info(callbacks) ->
-    [{init, 1}].
+    [{init, 1}, {terminate, 2}].
 
 %%% Wrapper functions over gen_server calls.
+start_link(PortNo) ->
+    gen_server:start_link(?MODULE, [PortNo], []).
 start(PortNo) ->
     gen_server:start(?MODULE, [PortNo], []).
 
 %%% gen_server callbacks.
 init([PortNo]) ->
-    spawn_link(make_accept_loop(PortNo)),
-    {ok, #state{}}.
+    {ok, ListenSocket} = gen_tcp:listen(PortNo, [list, {packet, 0}, {active, false}, {reuseaddr, true}]),
+    spawn_link(make_accept_loop(ListenSocket)),
+    {ok, #state{listen_socket=ListenSocket}}.
+terminate(_Reason, #state{listen_socket=ListenSocket}) ->
+    gen_tcp:close(ListenSocket).
+    
 
 %%% The internal workings of the client session initiator - both the singleton accept loop and the shim between socket and ClientProxy which the accept loop both creates and then links.
 
 % Make a function that runs an accept loop and creates child processes.
-make_accept_loop(PortNo) ->
-    {ok, ListenSocket} = gen_tcp:listen(PortNo, [list, {packet, 0}, {active, false}, {reuseaddr, true}]),
+make_accept_loop(ListenSocket) ->
     fun() ->
             accept_loop(ListenSocket)
     end.
@@ -85,5 +90,7 @@ message_forwarder_loop(Socket, ClientProxy) ->
 
 %%% Testing, although there isn't much we can test programmatically.
 test(Port) ->
+    {ok, Pid0} = channel_supervisor:start_link(),
+    Pid0 = whereis(channel_supervisor),
     {ok, Pid1} = channel_registry:start(),
-    {ok, Pid2} = gen_server:start(?MODULE, [Port], []).
+    {ok, Pid2} = start(Port).
