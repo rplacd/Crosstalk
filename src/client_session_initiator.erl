@@ -37,7 +37,6 @@ accept_loop(ListenSocket) ->
 %receive with a timeout of 0 here if we want to trap exits.
     case gen_tcp:accept(ListenSocket, 2000) of
         {ok, Socket} ->
-            io:format("Accepting a connection!"),
             MessageForwarder = spawn(make_message_forwarder_loop(Socket)),
             {ok, ClientProxy} = client_proxy:start(MessageForwarder),
             MessageForwarder ! {set_client_proxy, ClientProxy},

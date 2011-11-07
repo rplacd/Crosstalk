@@ -35,8 +35,6 @@ client_nick(Client) ->
 % Both of these functions take and return lists of strings - it handles the automagic formatting to and from the data we actually send down the pipes.
 % Both of these functions also currently wrap functions that strip and add the surreptitious telnet CRLF.
 to_message_forwarder(MessageForwarder, Message) ->
-    Sending = format_telnet(structure_message(Message)),
-    io:format("Sending ~s~n", [Sending]),
     MessageForwarder ! {to_client, format_telnet(structure_message(Message))}.
 
 to_client(Client, Message) ->
@@ -78,10 +76,8 @@ initialized({to_client, {ChannelPid, {_SrcPid, SrcNick}, Message}},
                             end, no_channel_found, ChannelMappings),
     case ChannelName of
         no_channel_found ->
-            io:format("no channel found"),
             {next_state, initialized, State};
         String when is_list(String) ->
-            io:format("sending message"),
             to_message_forwarder(MessageForwarder, ["message", ChannelName, SrcNick, Message]),
             {next_state, initialized, State}
     end.
