@@ -85,8 +85,8 @@ initialized(client_nick, {_Pid, _MsgTag}, State=#state{nick = Nick}) ->
     {reply, Nick, initialized, State}.
 
 % When the message forwarder crashes, we terminate...
-handle_info({'DOWN', _ref, process, MessageForwarder, _Reason}, _StateName, #state{message_forwarder=MessageForwarder}) ->
-    exit(normal).
+handle_info({'DOWN', _ref, process, MessageForwarder, _Reason}, _StateName, State=#state{message_forwarder=MessageForwarder}) ->
+    {stop, normal, State}.
 
 % When we terminate - either we crash, or the client disconnects and the client_proxy sends its death to us, remove ourselves from the channels we've connected to (that being the only real dependency we have to look after).
 terminate(_Reason, _StateName, _State=#state{nick=Nick, name_to_channel=ChannelMap}) ->
